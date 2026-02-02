@@ -1,0 +1,22 @@
+{
+    "name": "Node.js & TypeScript",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "esbenp.prettier-vscode",
+                "dsznajder.es7-react-js-snippets",
+                "streetsidesoftware.code-spell-checker"
+            ]
+        }
+    },
+	"mounts": [
+		{
+			"source": "${localEnv:HOME}/.ssh",
+			"target": "/home/node/.ssh",
+			"type": "bind"
+		}
+	],
+	"remoteUser": "node",
+    "postCreateCommand": "git config --global --add safe.directory /workspaces/${localWorkspaceFolderBasename}"
+}

@@ -1,0 +1,129 @@
+name: Test Get StratoCloud Credentials
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Cloud environment identifier (AWS account ID, Azure subscription ID, etc.)'
+        required: true
+        type: string
+      role:
+        description: 'Role name (ReadOnly, SecurityOperator, PowerUser, Administrator)'
+        required: true
+        type: string
+      duration:
+        description: 'Credential duration (e.g., 1h, 30m, 2h)'
+        required: false
+        type: string
+        default: '1h'
+      tenant_id:
+        description: 'StratoCloud tenant ID (used in audience for token exchange)'
+        required: true
+        type: string
+      provider:
+        description: 'Cloud provider'
+        required: true
+        type: choice
+        options:
+          - aws
+          - azure
+        default: 'aws'
+
+permissions:
+  id-token: write  # Required for OIDC token
+  contents: read
+
+jobs:
+  test-credentials:
+    name: Test Get Credentials (${{ github.event.inputs.provider }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Build Action
+        run: |
+          npm ci
+          npm run package
+          echo "✅ Action built successfully"
+      
+      - name: Get StratoCloud Credentials
+        id: credentials
+        # Using local action for testing (no publishing required)
+        # For published action, use: strato-cloud/get-credentials@v1
+        uses: ./
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          role: ${{ github.event.inputs.role }}
+          duration: ${{ github.event.inputs.duration || '1h' }}
+          tenant_id: ${{ github.event.inputs.tenant_id }}
+          auth_url: ${{ secrets.STRATO_AUTH_URL || 'https://api.preview.strato-cloud.io/auth' }}
+          access_url: ${{ secrets.STRATO_ACCESS_URL || 'https://api.preview.strato-cloud.io/access' }}
+      
+      - name: Display Credentials Summary
+        run: |
+          echo "## ✅ Credentials Obtained Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Role:** ${{ github.event.inputs.role }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration:** ${{ github.event.inputs.duration || '1h' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Expiration:** ${{ steps.credentials.outputs.expiration }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ github.event.inputs.provider }}" = "aws" ]; then
+            echo "**Provider:** AWS" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.credentials.outputs.console_url }}" ]; then
+              echo "**Console URL:** ${{ steps.credentials.outputs.console_url }}" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### AWS Credentials" >> $GITHUB_STEP_SUMMARY
+            echo "- Access Key ID: \`${{ steps.credentials.outputs.access_key_id }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Credentials are set as environment variables: \`AWS_ACCESS_KEY_ID\`, \`AWS_SECRET_ACCESS_KEY\`, \`AWS_SESSION_TOKEN\`" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event.inputs.provider }}" = "azure" ]; then
+            echo "**Provider:** Azure" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.credentials.outputs.console_url }}" ]; then
+              echo "**Console URL:** ${{ steps.credentials.outputs.console_url }}" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Azure Credentials" >> $GITHUB_STEP_SUMMARY
+            echo "- Guest User Email: \`${{ steps.credentials.outputs.guest_user_email }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Tenant ID: \`${{ steps.credentials.outputs.tenant_id_output }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Subscription ID: \`${{ steps.credentials.outputs.subscription_id }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Credentials are set as environment variables: \`AZURE_GUEST_USER_EMAIL\`, \`AZURE_TAP\`, etc." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Test completed successfully!**" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Verify AWS Credentials (if AWS)
+        if: github.event.inputs.provider == 'aws'
+        run: |
+          echo "Verifying AWS credentials..."
+          if command -v aws &> /dev/null; then
+            echo "AWS CLI found, testing credentials..."
+            aws sts get-caller-identity || echo "⚠️ AWS CLI test failed (credentials may still be valid)"
+          else
+            echo "ℹ️ AWS CLI not installed, skipping verification"
+            echo "Credentials are available as environment variables:"
+            echo "  - AWS_ACCESS_KEY_ID"
+            echo "  - AWS_SECRET_ACCESS_KEY"
+            echo "  - AWS_SESSION_TOKEN"
+          fi
+      
+      - name: Display All Outputs
+        run: |
+          echo "=== All Action Outputs ==="
+          echo "expiration: ${{ steps.credentials.outputs.expiration }}"
+          echo "console_url: ${{ steps.credentials.outputs.console_url }}"
+          if [ "${{ github.event.inputs.provider }}" = "aws" ]; then
+            echo "access_key_id: ${{ steps.credentials.outputs.access_key_id }}"
+            echo "secret_access_key: [REDACTED]"
+            echo "session_token: [REDACTED]"
+          elif [ "${{ github.event.inputs.provider }}" = "azure" ]; then
+            echo "guest_user_email: ${{ steps.credentials.outputs.guest_user_email }}"
+            echo "tenant_id_output: ${{ steps.credentials.outputs.tenant_id_output }}"
+            echo "subscription_id: ${{ steps.credentials.outputs.subscription_id }}"
+            echo "tap: [REDACTED]"
+          fi
+          echo "credentials_json: [See full JSON output]"

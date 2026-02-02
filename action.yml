@@ -1,0 +1,55 @@
+name: 'Get StratoCloud Credentials'
+description: 'Get ephemeral workload JIT credentials from StratoCloud using GitHub OIDC'
+branding:
+  icon: 'key'
+  color: 'blue'
+inputs:
+  environment:
+    description: 'Cloud environment identifier (e.g., AWS account ID, Azure subscription ID, GCP project ID)'
+    required: true
+  role:
+    description: 'The name of the Role associated with the credentials (e.g., ReadOnly, SecurityOperator, PowerUser, Administrator)'
+    required: true
+  tenant_id:
+    description: 'StratoCloud tenant ID (used in audience for token exchange)'
+    required: true    
+  duration:
+    description: 'The duration the credentials should be valid for (e.g., 1h, 30m)'
+    required: false
+    default: '1h'
+  auth_url:
+    description: 'StratoCloud auth service URL'
+    required: false
+    default: 'https://api.preview.strato-cloud.io/auth'
+  access_url:
+    description: 'StratoCloud access service URL'
+    required: false
+    default: 'https://api.preview.strato-cloud.io/access'
+  set_env:
+    description: 'Set credentials as environment variables (true/false)'
+    required: false
+    default: 'true'
+outputs:
+  access_key_id:
+    description: 'AWS Access Key ID (AWS only)'
+  secret_access_key:
+    description: 'AWS Secret Access Key (AWS only)'
+  session_token:
+    description: 'AWS Session Token (AWS only)'
+  console_url:
+    description: 'Cloud console URL'
+  guest_user_email:
+    description: 'Azure guest user email (Azure only)'
+  tap:
+    description: 'Azure Time-based Access Password (Azure only)'
+  tenant_id_output:
+    description: 'Azure tenant ID (Azure only)'
+  subscription_id:
+    description: 'Azure subscription ID (Azure only)'
+  expiration:
+    description: 'Credential expiration timestamp'
+  credentials_json:
+    description: 'Full credentials as JSON string'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
