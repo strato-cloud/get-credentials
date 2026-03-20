@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import * as fs from 'fs';
 
 interface TokenExchangeRequest {
   grant_type: string;
@@ -93,24 +92,8 @@ async function exchangeTokenForSWAT(
       throw new Error('Token exchange response missing access_token');
     }
 
-    // Debug: Print SWAT token (using hex encoding to avoid auto-masking)
-    // GitHub Actions auto-masks JWT-like tokens, so we encode it
-    const hexToken = Buffer.from(data.access_token).toString('hex');
-    core.info(`SWAT_TOKEN_HEX=${hexToken}`);
-    core.info(`SWAT Token length: ${data.access_token.length}`);
-    
-    // Also try writing to step summary which might not be masked
-    const summaryPath = process.env.GITHUB_STEP_SUMMARY || '/dev/null';
-    try {
-      fs.appendFileSync(summaryPath, `\n## SWAT Token (for debugging)\n\`\`\`\n${data.access_token}\n\`\`\`\n`);
-    } catch (e) {
-      // Ignore if step summary not available
-    }
-    
-    // TODO: Re-enable masking after debugging
-    // Mask the token in logs
-    // core.setSecret(data.access_token);
-    
+    core.setSecret(data.access_token);
+
     return data.access_token;
   } catch (error) {
     core.setFailed(`Failed to exchange token for SWAT: ${error}`);
@@ -131,7 +114,6 @@ async function checkPermissions(
   };
 
   try {
-    core.info(`DEBUG: Checking permissions for action: access::${role}, resource: ${environment}`);
     const response = await fetch(`${authUrl}/permissions/can`, {
       method: 'POST',
       headers: {
@@ -142,22 +124,10 @@ async function checkPermissions(
       body: JSON.stringify(requestBody)
     });
 
-    const responseText = await response.text();
-    let responseJson;
-    try {
-      responseJson = JSON.parse(responseText);
-    } catch (e) {
-      responseJson = responseText;
-    }
-
-    core.info(`DEBUG: Permissions check response status: ${response.status} ${response.statusText}`);
-    core.info(`DEBUG: Permissions check response body: ${JSON.stringify(responseJson, null, 2)}`);
-    
     if (!response.ok) {
-      core.warning(`Permissions check failed: ${response.status} ${response.statusText}`);
-      core.warning(`Response: ${JSON.stringify(responseJson, null, 2)}`);
-    } else {
-      core.info(`Permissions check passed: ${JSON.stringify(responseJson, null, 2)}`);
+      core.warning(
+        `Permissions check failed: ${response.status} ${response.statusText}`
+      );
     }
   } catch (error) {
     core.warning(`Failed to check permissions: ${error}`);
@@ -178,12 +148,6 @@ async function requestCredentials(
   };
 
   try {
-    // Debug: Print SWAT token info (using hex to avoid auto-masking)
-    const hexToken = Buffer.from(swatToken).toString('hex');
-    core.info(`DEBUG: SWAT Token (hex): ${hexToken}`);
-    core.info(`DEBUG: SWAT Token length: ${swatToken.length}`);
-    core.info(`DEBUG: Access URL: ${accessUrl}`);
-    core.info(`DEBUG: Request Body: ${JSON.stringify(requestBody, null, 2)}`);
     const response = await fetch(`${accessUrl}/credentials`, {
       method: 'POST',
       headers: {
@@ -298,7 +262,6 @@ async function run(): Promise<void> {
     core.info('Exchanging OIDC token for SWAT...');
     const swatToken = await exchangeTokenForSWAT(oidcToken, tenantId, authUrl);
 
-    // Debug: Check permissions before requesting credentials
     core.info('Checking permissions...');
     await checkPermissions(swatToken, environment, role, authUrl);
 
