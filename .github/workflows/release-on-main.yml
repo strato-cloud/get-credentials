@@ -1,0 +1,66 @@
+name: Release on main
+
+# Builds dist/, bumps package.json patch, commits with [skip ci], tags vX.Y.Z and rolling v1.
+# Consumers need dist/ in git at the pinned ref; this keeps main and tags runnable.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: release-on-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+      !contains(github.event.head_commit.message, '[skip ci]'))
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install and package
+        run: |
+          npm ci
+          npm run package
+
+      - name: Bump version, commit dist, tag, push
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          npm version patch --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+
+          git add -f dist/ package.json package-lock.json
+          if git diff --staged --quiet; then
+            echo "No staged changes; aborting"
+            exit 1
+          fi
+
+          git commit -m "chore(release): v${VERSION} [skip ci]"
+          git tag "v${VERSION}"
+          MAJOR="${VERSION%%.*}"
+          git tag -f "v${MAJOR}"
+
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
+          git push origin "v${MAJOR}" --force
