@@ -25787,10 +25787,6 @@ function setOutputs(credentials, setEnv) {
     const creds = credentials.credentials;
     // Set expiration
     core.setOutput('expiration', credentials.expiration);
-    // Set console URL if available
-    if (creds.console_url) {
-        core.setOutput('console_url', creds.console_url);
-    }
     // AWS credentials
     if (creds.access_key_id) {
         core.setOutput('access_key_id', creds.access_key_id);
@@ -25809,9 +25805,6 @@ function setOutputs(credentials, setEnv) {
             core.exportVariable('AWS_ACCESS_KEY_ID', creds.access_key_id);
             core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.secret_access_key || '');
             core.exportVariable('AWS_SESSION_TOKEN', creds.session_token || '');
-            if (creds.console_url) {
-                core.exportVariable('AWS_CONSOLE_URL', creds.console_url);
-            }
         }
     }
     // Azure credentials
@@ -25835,13 +25828,11 @@ function setOutputs(credentials, setEnv) {
             if (creds.subscription_id) {
                 core.exportVariable('AZURE_SUBSCRIPTION_ID', creds.subscription_id);
             }
-            if (creds.console_url) {
-                core.exportVariable('AZURE_CONSOLE_URL', creds.console_url);
-            }
         }
     }
-    // Set full credentials JSON
-    core.setOutput('credentials_json', JSON.stringify(credentials));
+    // Omit console_url from serialized output (not exposed as step output or in logs)
+    const { console_url: _omitConsole, ...credentialsWithoutConsole } = creds;
+    core.setOutput('credentials_json', JSON.stringify({ ...credentials, credentials: credentialsWithoutConsole }));
 }
 async function run() {
     try {
@@ -25865,9 +25856,6 @@ async function run() {
         setOutputs(credentials, setEnv);
         core.info('✅ Credentials obtained successfully!');
         core.info(`Expiration: ${credentials.expiration}`);
-        if (credentials.credentials.console_url) {
-            core.info(`Console URL: ${credentials.credentials.console_url}`);
-        }
     }
     catch (error) {
         if (error instanceof Error) {
