@@ -71,18 +71,12 @@ jobs:
           
           if [ "${{ github.event.inputs.provider }}" = "aws" ]; then
             echo "**Provider:** AWS" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ steps.credentials.outputs.console_url }}" ]; then
-              echo "**Console URL:** ${{ steps.credentials.outputs.console_url }}" >> $GITHUB_STEP_SUMMARY
-            fi
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### AWS Credentials" >> $GITHUB_STEP_SUMMARY
             echo "- Access Key ID: \`${{ steps.credentials.outputs.access_key_id }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- Credentials are set as environment variables: \`AWS_ACCESS_KEY_ID\`, \`AWS_SECRET_ACCESS_KEY\`, \`AWS_SESSION_TOKEN\`" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ github.event.inputs.provider }}" = "azure" ]; then
             echo "**Provider:** Azure" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ steps.credentials.outputs.console_url }}" ]; then
-              echo "**Console URL:** ${{ steps.credentials.outputs.console_url }}" >> $GITHUB_STEP_SUMMARY
-            fi
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Azure Credentials" >> $GITHUB_STEP_SUMMARY
             echo "- Guest User Email: \`${{ steps.credentials.outputs.guest_user_email }}\`" >> $GITHUB_STEP_SUMMARY
@@ -115,7 +109,6 @@ jobs:
         run: |
           echo "=== All Action Outputs ==="
           echo "expiration: ${{ steps.credentials.outputs.expiration }}"
-          echo "console_url: ${{ steps.credentials.outputs.console_url }}"
           if [ "${{ github.event.inputs.provider }}" = "aws" ]; then
             echo "access_key_id: ${{ steps.credentials.outputs.access_key_id }}"
             echo "secret_access_key: [REDACTED]"

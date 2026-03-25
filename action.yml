@@ -36,8 +36,6 @@ outputs:
     description: 'AWS Secret Access Key (AWS only)'
   session_token:
     description: 'AWS Session Token (AWS only)'
-  console_url:
-    description: 'Cloud console URL'
   guest_user_email:
     description: 'Azure guest user email (Azure only)'
   tap:
