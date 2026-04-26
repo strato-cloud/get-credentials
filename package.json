@@ -1,6 +1,6 @@
 {
   "name": "strato-cloud-get-credentials",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "GitHub Action to get ephemeral workload JIT credentials from Strato Cloud",
   "main": "dist/index.js",
   "scripts": {
