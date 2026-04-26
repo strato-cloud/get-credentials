@@ -16,6 +16,10 @@ on:
         required: false
         type: string
         default: '1h'
+      reason:
+        description: 'Optional reason for requesting credentials'
+        required: false
+        type: string
       tenant_id:
         description: 'StratoCloud tenant ID (used in audience for token exchange)'
         required: true
@@ -56,6 +60,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           role: ${{ github.event.inputs.role }}
           duration: ${{ github.event.inputs.duration || '1h' }}
+          reason: ${{ github.event.inputs.reason || '' }}
           tenant_id: ${{ github.event.inputs.tenant_id }}
           auth_url: ${{ secrets.STRATO_AUTH_URL || 'https://api.preview.strato-cloud.io/auth' }}
           access_url: ${{ secrets.STRATO_ACCESS_URL || 'https://api.preview.strato-cloud.io/access' }}
@@ -67,6 +72,9 @@ jobs:
           echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Role:** ${{ github.event.inputs.role }}" >> $GITHUB_STEP_SUMMARY
           echo "**Duration:** ${{ github.event.inputs.duration || '1h' }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.reason }}" ]; then
+            echo "**Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "**Expiration:** ${{ steps.credentials.outputs.expiration }}" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ github.event.inputs.provider }}" = "aws" ]; then

@@ -80,6 +80,7 @@ jobs:
           environment: "123456789012"  # AWS Account ID
           role: "ReadOnly"
           duration: "1h"
+          reason: "deploy main to production"
           tenant_id: "org_xxx"
           auth_url: "https://auth.strato.cloud"
           access_url: "https://api.strato.cloud"
@@ -169,6 +170,7 @@ jobs:
 | `environment` | Cloud environment identifier (AWS account ID, Azure subscription ID, etc.) | Yes | - |
 | `role` | The name of the Role associated with the credentials (e.g., ReadOnly, Administrator) | Yes | - |
 | `duration` | The duration the credentials should be valid for (e.g., 1h, 30m) | Yes | `1h` |
+| `reason` | Optional reason for requesting credentials (included in StratoCloud audit context) | No | - |
 | `tenant_id` | Strato Cloud tenant ID (used in audience for token exchange) | Yes | - |
 | `auth_url` | Strato Cloud auth service URL | No | `https://auth.strato.cloud` |
 | `access_url` | Strato Cloud access service URL | No | `https://api.strato.cloud` |

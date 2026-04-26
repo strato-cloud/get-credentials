@@ -17,6 +17,9 @@ inputs:
     description: 'The duration the credentials should be valid for (e.g., 1h, 30m)'
     required: false
     default: '1h'
+  reason:
+    description: 'Optional reason for requesting credentials (included in StratoCloud audit context)'
+    required: false
   auth_url:
     description: 'StratoCloud auth service URL'
     required: false
