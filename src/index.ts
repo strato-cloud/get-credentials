@@ -20,6 +20,7 @@ interface CredentialRequest {
   environment: string;
   role: string;
   duration: string;
+  reason?: string;
   request_id?: string;
 }
 
@@ -139,6 +140,7 @@ async function requestCredentials(
   environment: string,
   role: string,
   duration: string,
+  reason: string,
   accessUrl: string
 ): Promise<CredentialsResponse> {
   const requestBody: CredentialRequest = {
@@ -146,6 +148,9 @@ async function requestCredentials(
     role,
     duration
   };
+  if (reason) {
+    requestBody.reason = reason;
+  }
 
   try {
     const response = await fetch(`${accessUrl}/credentials`, {
@@ -244,6 +249,7 @@ async function run(): Promise<void> {
     const environment = core.getInput('environment', { required: true });
     const role = core.getInput('role', { required: true });
     const duration = core.getInput('duration') || '1h';
+    const reason = core.getInput('reason') || '';
     const tenantId = core.getInput('tenant_id', { required: true });
     const authUrl = core.getInput('auth_url') || 'https://api.preview.strato-cloud.io/auth';
     const accessUrl = core.getInput('access_url') || 'https://api.preview.strato-cloud.io/access';
@@ -259,7 +265,7 @@ async function run(): Promise<void> {
     await checkPermissions(swatToken, environment, role, authUrl);
 
     core.info(`Requesting credentials for environment: ${environment}, role: ${role}, duration: ${duration}`);
-    const credentials = await requestCredentials(swatToken, environment, role, duration, accessUrl);
+    const credentials = await requestCredentials(swatToken, environment, role, duration, reason, accessUrl);
 
     core.info('Setting outputs...');
     setOutputs(credentials, setEnv);
