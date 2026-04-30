@@ -63,7 +63,7 @@ git push origin v1.0.1
 Once published, customers can use the action in their workflows:
 
 ```yaml
-- uses: strato-cloud/get-credentials@v1
+- uses: strato-cloud/get-credentials@v2
   with:
     environment: "123456789012"
     role: "ReadOnly"
@@ -77,9 +77,9 @@ Once published, customers can use the action in their workflows:
 - **Patch versions** (`v1.0.0`, `v1.0.1`): Use for bug fixes
 
 Customers can pin to:
-- `@v1` - Latest v1.x.x (recommended for most users)
-- `@v1.0` - Latest v1.0.x
-- `@v1.0.0` - Specific version (most stable)
+- `@v2` - Latest v2.x.x (recommended for most users)
+- `@v2.0` - Latest v2.0.x
+- `@v2.0.0` - Specific version (most stable)
 
 ## Development Workflow
 

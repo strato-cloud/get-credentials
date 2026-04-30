@@ -7,7 +7,7 @@ This GitHub Action enables you to obtain ephemeral workload JIT (Just-In-Time) c
 ## Quick Start
 
 ```yaml
-- uses: strato-cloud/get-credentials@v1
+- uses: strato-cloud/get-credentials@v2
   with:
     environment: "123456789012"
     role: "ReadOnly"
@@ -43,13 +43,13 @@ permissions:
 Add this action to your workflow by referencing the published action:
 
 ```yaml
-- uses: strato-cloud/get-credentials@v1
+- uses: strato-cloud/get-credentials@v2
 ```
 
 Or use a specific version:
 
 ```yaml
-- uses: strato-cloud/get-credentials@v1.0.0
+- uses: strato-cloud/get-credentials@v2.0.0
 ```
 
 ## Usage
@@ -75,7 +75,7 @@ jobs:
       
       - name: Get Strato Cloud Credentials
         id: credentials
-        uses: strato-cloud/get-credentials@v1
+        uses: strato-cloud/get-credentials@v2
         with:
           environment: "123456789012"  # AWS Account ID
           role: "ReadOnly"
@@ -113,7 +113,7 @@ jobs:
       
       - name: Get Strato Cloud Credentials
         id: credentials
-        uses: strato-cloud/get-credentials@v1
+        uses: strato-cloud/get-credentials@v2
         with:
           environment: "subscription-123"  # Azure Subscription ID
           role: "Administrator"
@@ -133,7 +133,7 @@ jobs:
 ```yaml
 - name: Get Strato Cloud Credentials
   id: credentials
-  uses: strato-cloud/get-credentials@v1
+  uses: strato-cloud/get-credentials@v2
   with:
     environment: "123456789012"
     role: "ReadOnly"
@@ -153,7 +153,7 @@ jobs:
 
 ```yaml
 - name: Get Strato Cloud Credentials
-  uses: strato-cloud/get-credentials@v1
+  uses: strato-cloud/get-credentials@v2
   with:
     environment: "123456789012"
     role: "ReadOnly"
