@@ -95,7 +95,7 @@ You can test everything locally before publishing:
 3. **Publish when ready**:
    - Once testing is complete, create a release tag
    - The build workflow will automatically publish it
-   - Customers can then use: `strato-cloud/get-credentials@v2`
+   - Customers can then use: `strato-cloud/get-credentials@v1`
 
 ### Example Test Workflow
 

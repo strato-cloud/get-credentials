@@ -63,7 +63,7 @@ git push origin v1.0.1
 Once published, customers can use the action in their workflows:
 
 ```yaml
-- uses: strato-cloud/get-credentials@v2
+- uses: strato-cloud/get-credentials@v1
   with:
     environment: "123456789012"
     role: "ReadOnly"
