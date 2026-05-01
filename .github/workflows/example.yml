@@ -54,7 +54,7 @@ jobs:
       - name: Get StratoCloud Credentials
         id: credentials
         # Using local action for testing (no publishing required)
-        # For published action, use: strato-cloud/get-credentials@v2
+        # For published action, use: strato-cloud/get-credentials@v1
         uses: ./
         with:
           environment: ${{ github.event.inputs.environment }}
