@@ -25749,7 +25749,7 @@ async function exchangeTokenForSWAT(oidcToken, tenantId, authUrl, scope) {
 
 /***/ }),
 
-/***/ 9407:
+/***/ 4439:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25790,137 +25790,29 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const exchange_1 = __nccwpck_require__(7786);
-async function checkPermissions(swatToken, environment, role, authUrl) {
-    const requestBody = {
-        action: `access::${role}`,
-        resource_id: environment,
-        resource_type: 'environment'
-    };
-    try {
-        const response = await fetch(`${authUrl}/permissions/can`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${swatToken}`,
-                'Content-Type': 'application/json',
-                'accept': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-        if (!response.ok) {
-            core.warning(`Permissions check failed: ${response.status} ${response.statusText}`);
-        }
-    }
-    catch (error) {
-        core.warning(`Failed to check permissions: ${error}`);
-    }
-}
-async function requestCredentials(swatToken, environment, role, duration, reason, accessUrl) {
-    const requestBody = {
-        environment,
-        role,
-        duration
-    };
-    if (reason) {
-        requestBody.reason = reason;
-    }
-    try {
-        const response = await fetch(`${accessUrl}/credentials`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${swatToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Credential request failed: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(`Credential request error: ${data.error} - ${data.error_description || ''}`);
-        }
-        return data;
-    }
-    catch (error) {
-        core.setFailed(`Failed to request credentials: ${error}`);
-        throw error;
-    }
-}
-function setOutputs(credentials, setEnv) {
-    const creds = credentials.credentials;
-    // Set expiration
-    core.setOutput('expiration', credentials.expiration);
-    // AWS credentials
-    if (creds.access_key_id) {
-        core.setOutput('access_key_id', creds.access_key_id);
-        core.setOutput('secret_access_key', creds.secret_access_key || '');
-        core.setOutput('session_token', creds.session_token || '');
-        // Mask sensitive values
-        core.setSecret(creds.access_key_id);
-        if (creds.secret_access_key) {
-            core.setSecret(creds.secret_access_key);
-        }
-        if (creds.session_token) {
-            core.setSecret(creds.session_token);
-        }
-        // Set environment variables if requested
-        if (setEnv) {
-            core.exportVariable('AWS_ACCESS_KEY_ID', creds.access_key_id);
-            core.exportVariable('AWS_SECRET_ACCESS_KEY', creds.secret_access_key || '');
-            core.exportVariable('AWS_SESSION_TOKEN', creds.session_token || '');
-        }
-    }
-    // Azure credentials
-    if (creds.guest_user_email) {
-        core.setOutput('guest_user_email', creds.guest_user_email);
-        core.setOutput('tap', creds.tap || '');
-        core.setOutput('tenant_id_output', creds.tenant_id || '');
-        core.setOutput('subscription_id', creds.subscription_id || '');
-        // Mask sensitive values
-        core.setSecret(creds.guest_user_email);
-        if (creds.tap) {
-            core.setSecret(creds.tap);
-        }
-        // Set environment variables if requested
-        if (setEnv) {
-            core.exportVariable('AZURE_GUEST_USER_EMAIL', creds.guest_user_email);
-            core.exportVariable('AZURE_TAP', creds.tap || '');
-            if (creds.tenant_id) {
-                core.exportVariable('AZURE_TENANT_ID', creds.tenant_id);
-            }
-            if (creds.subscription_id) {
-                core.exportVariable('AZURE_SUBSCRIPTION_ID', creds.subscription_id);
-            }
-        }
-    }
-    // Omit console_url from serialized output (not exposed as step output or in logs)
-    const { console_url: _omitConsole, ...credentialsWithoutConsole } = creds;
-    core.setOutput('credentials_json', JSON.stringify({ ...credentials, credentials: credentialsWithoutConsole }));
-}
+/**
+ * get-token: mint a StratoCloud Workload Access Token (SWAT) from the workflow's
+ * GitHub OIDC identity and expose it as an output. Unlike get-credentials (which trades
+ * the SWAT for ephemeral cloud credentials and discards it), this action returns the
+ * SWAT itself so callers can authenticate directly to StratoCloud APIs.
+ *
+ * Defaults to production; override `auth_url` only for non-prod (e.g. preview).
+ */
 async function run() {
     try {
-        // Get inputs
-        const environment = core.getInput('environment', { required: true });
-        const role = core.getInput('role', { required: true });
-        const duration = core.getInput('duration') || '1h';
-        const reason = core.getInput('reason') || '';
         const tenantId = core.getInput('tenant_id', { required: true });
-        const authUrl = core.getInput('auth_url') || 'https://api.preview.strato-cloud.io/auth';
-        const accessUrl = core.getInput('access_url') || 'https://api.preview.strato-cloud.io/access';
-        const setEnv = core.getBooleanInput('set_env', { required: false }) ?? true;
+        // Default to production. Override only for non-prod environments (e.g. preview).
+        const authUrl = core.getInput('auth_url') || 'https://api.app.strato-cloud.io/auth';
+        // Optional space-separated scopes. If omitted, the SWAT inherits all of the
+        // integration's allowed_scopes; if set, each must be within allowed_scopes.
+        const scope = core.getInput('scope');
         core.info('Getting GitHub OIDC token...');
         const oidcToken = await (0, exchange_1.getGitHubOIDCToken)(tenantId);
         core.info('Exchanging OIDC token for SWAT...');
-        const swatToken = await (0, exchange_1.exchangeTokenForSWAT)(oidcToken, tenantId, authUrl);
-        core.info('Checking permissions...');
-        await checkPermissions(swatToken, environment, role, authUrl);
-        core.info(`Requesting credentials for environment: ${environment}, role: ${role}, duration: ${duration}`);
-        const credentials = await requestCredentials(swatToken, environment, role, duration, reason, accessUrl);
-        core.info('Setting outputs...');
-        setOutputs(credentials, setEnv);
-        core.info('✅ Credentials obtained successfully!');
-        core.info(`Expiration: ${credentials.expiration}`);
+        const swat = await (0, exchange_1.exchangeTokenForSWAT)(oidcToken, tenantId, authUrl, scope);
+        // exchangeTokenForSWAT already registered the value as a secret (masked in logs).
+        core.setOutput('swat', swat);
+        core.info('✅ SWAT obtained successfully!');
     }
     catch (error) {
         if (error instanceof Error) {
@@ -27852,7 +27744,7 @@ module.exports = parseParams
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(9407);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(4439);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

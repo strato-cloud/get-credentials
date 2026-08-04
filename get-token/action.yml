@@ -1,0 +1,22 @@
+name: 'Get StratoCloud Token (SWAT)'
+description: 'Mint a StratoCloud Workload Access Token (SWAT) from GitHub OIDC and return it as an output'
+branding:
+  icon: 'lock'
+  color: 'blue'
+inputs:
+  tenant_id:
+    description: 'StratoCloud tenant ID (used in the audience for token exchange)'
+    required: true
+  scope:
+    description: 'Optional space-separated SWAT scopes (e.g. "assistant:write environments:read"). Each must be within the integration''s allowed capabilities. If omitted, the SWAT inherits all allowed scopes.'
+    required: false
+  auth_url:
+    description: 'StratoCloud auth service URL. Defaults to production; override only for non-prod (e.g. preview).'
+    required: false
+    default: 'https://api.app.strato-cloud.io/auth'
+outputs:
+  swat:
+    description: 'The minted StratoCloud Workload Access Token (masked in logs; treat as a secret)'
+runs:
+  using: 'node24'
+  main: 'dist/index.js'

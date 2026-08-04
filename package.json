@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc",
     "package": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "package:get-token": "ncc build src/get-token.ts -o get-token/dist --source-map --license licenses.txt",
+    "package:all": "npm run package && npm run package:get-token",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
