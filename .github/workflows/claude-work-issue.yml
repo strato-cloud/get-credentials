@@ -1,7 +1,12 @@
 name: Claude Work Issue
 on:
   issues:
-    types: [opened]
+    # Only issues labeled AI: labeled covers both an issue opened with the
+    # label and one that gets it later (the shared workflow checks the label).
+    types: [labeled]
+
+# issues is a low-trust trigger: restore caches, never save them.
+cache-mode: read
 
 jobs:
   call:
