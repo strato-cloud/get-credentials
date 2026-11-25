@@ -1,0 +1,60 @@
+# Dependabot version updates (monthly, on the 10th), same schedule and grouping
+# as the service repos.
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    # fix(deps) to match the service repos. release-on-main.yml rebuilds
+    # dist/ and cuts a patch release on every merge regardless of prefix, so
+    # a merged bump ships to consumers of the rolling v1 tag.
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+    schedule:
+      interval: cron
+      cronjob: "0 9 10 * *"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    # The action runs on node20 (action.yml), so its types stay on Node 20.
+    # Move them together with `runs.using`.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    # Grouped by risk: patch, minor and major bumps each arrive as one PR.
+    # Security updates ignore these groups and still open one PR each.
+    groups:
+      patches:
+        update-types:
+          - patch
+      minor:
+        update-types:
+          - minor
+      major:
+        update-types:
+          - major
+
+  - package-ecosystem: github-actions
+    directory: /
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    schedule:
+      interval: cron
+      cronjob: "0 9 10 * *"
+      timezone: America/New_York
+    open-pull-requests-limit: 2
+    # Internal reusable workflows are versioned by us, and Dependabot has no
+    # access to the private automation repo (the update job would fail).
+    ignore:
+      - dependency-name: "strato-cloud/automation*"
+    # Minor and patch bumps as one PR; majors open their own PR each.
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
