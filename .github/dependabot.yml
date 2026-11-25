@@ -1,4 +1,4 @@
-# Dependabot version updates (weekly, Thursday), same schedule and grouping
+# Dependabot version updates (monthly, on the 10th), same schedule and grouping
 # as the service repos.
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
@@ -13,9 +13,8 @@ updates:
       prefix: "fix"
       include: "scope"
     schedule:
-      interval: weekly
-      day: thursday
-      time: "09:00"
+      interval: cron
+      cronjob: "0 9 10 * *"
       timezone: America/New_York
     open-pull-requests-limit: 3
     rebase-strategy: auto
@@ -43,9 +42,8 @@ updates:
       prefix: "ci"
       include: "scope"
     schedule:
-      interval: weekly
-      day: thursday
-      time: "09:00"
+      interval: cron
+      cronjob: "0 9 10 * *"
       timezone: America/New_York
     open-pull-requests-limit: 2
     # Internal reusable workflows are versioned by us, and Dependabot has no
